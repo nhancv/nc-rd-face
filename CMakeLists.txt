@@ -31,3 +31,6 @@ add_executable(${target} headpose.cpp)
 
 # Link your application with OpenCV libraries
 target_link_libraries(${target} ${OpenCV_LIBS})
+
+# Custom working directory
+set_property(TARGET ${target} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/cmake-build-debug")
