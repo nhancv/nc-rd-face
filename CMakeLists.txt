@@ -51,9 +51,6 @@ file(GLOB hdrs *.hpp *.h)
 
 include_directories("${CMAKE_CURRENT_LIST_DIR}")
 
-# Custom working directory
-set_property(TARGET ${target} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/cmake-build-debug")
-
 # Since there are a lot of examples I'm going to use a macro to simplify this
 # CMakeLists.txt file.  However, usually you will create only one executable in
 # your cmake projects and use the syntax shown above.
