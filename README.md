@@ -1,7 +1,7 @@
 # nc-rd-facemask
 Facemask C++
 
-# Prepare OpenCV source
+# Prepare OpenCV source (4.0.1)
 - macOS: Install form homebrew
 - Windows: download windows pack, extract and put opencv folder to `D:/_Program Files/`
 
