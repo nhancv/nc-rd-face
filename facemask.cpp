@@ -48,21 +48,20 @@ void detectFaceDlibHog(frontal_face_detector hogFaceDetector, Mat &frameDlibHog,
     }
 }
 
-void imageSource(frontal_face_detector hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
+void imageSource(const frontal_face_detector& hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
     namedWindow("imageSource");
 
     Mat img = imread("samples/samsam.jpg");
-    namedWindow("Input", WINDOW_NORMAL);
-    (*detectFaceCb)(hogFaceDetector, img, 300, 0);
+    (*detectFaceCb)(hogFaceDetector, img, 200, 0);
     imshow("imageSource", img);
     waitKey(0);
 }
 
-void videoSource(frontal_face_detector hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
+void videoSource(const frontal_face_detector& hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
     namedWindow("videoSource");
 
     // Read video
-    VideoCapture video("samples/samsam.mp4");
+    VideoCapture video("samples/mrstevejobs.mp4");
     // Exit if video is not opened
     if (!video.isOpened()) {
         cout << "Could not read video file" << endl;
@@ -76,8 +75,7 @@ void videoSource(frontal_face_detector hogFaceDetector, void (*detectFaceCb)(fro
         // Start timer
         auto timer = (double) getTickCount();
 
-//        (*detectFaceCb)(hogFaceDetector, img, 300, 0);
-
+        (*detectFaceCb)(hogFaceDetector, frame, 200, 0);
 
         // Calculate Frames per second (FPS)
         float fps = getTickFrequency() / ((double) getTickCount() - timer);
