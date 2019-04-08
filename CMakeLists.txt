@@ -30,9 +30,11 @@ endif()
 # via the command line or GUI
 if(WIN32)
     set(OpenCV_DIR "D:/_Program Files/opencv/build/x64/vc15/lib")
+    set(dlib_DIR "D:/_Program Files/dlib/lib/cmake/dlib")
 endif()
 if(APPLE)
     set(OpenCV_DIR "/usr/local/Cellar/opencv/4.0.1/lib/cmake/opencv4")
+    set(dlib_DIR "/usr/local/Cellar/dlib/19.17/lib/cmake/dlib")
 endif()
 
 find_package(OpenCV REQUIRED)
