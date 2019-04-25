@@ -10,7 +10,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC_IDE OR XCODE))
 endif()
 
 # Set target name, change with your favorite name
-project(nc-rd-facemask CXX)
+project(nc-rd-face CXX)
 
 message( STATUS "Build type: ${CMAKE_BUILD_TYPE}" )
 message( STATUS "Configuration types: ${CMAKE_CONFIGURATION_TYPES}" )
@@ -51,9 +51,9 @@ file(GLOB hdrs *.hpp *.h)
 
 include_directories("${CMAKE_CURRENT_LIST_DIR}")
 
-macro(add_example name)
+macro(add_target name)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} ${OpenCV_LIBS} dlib::dlib)
 endmacro()
 
-add_example(facemask)
+add_target(face_detect)

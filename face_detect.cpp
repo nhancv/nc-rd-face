@@ -54,7 +54,6 @@ void imageSource(const frontal_face_detector& hogFaceDetector, void (*detectFace
     Mat img = imread("samples/samsam.jpg");
     (*detectFaceCb)(hogFaceDetector, img, 200, 0);
     imshow("imageSource", img);
-    waitKey(0);
 }
 
 void videoSource(const frontal_face_detector& hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
@@ -100,6 +99,7 @@ int main(int argc, char **argv) {
     void (*detectFaceCb)(frontal_face_detector, Mat &, int, int) = &detectFaceDlibHog;
 
     imageSource(hogFaceDetector, detectFaceCb);
+//    waitKey(0);
 
     videoSource(hogFaceDetector, detectFaceCb);
 
