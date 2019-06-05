@@ -10,7 +10,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC_IDE OR XCODE))
 endif()
 
 # Set target name, change with your favorite name
-project(nc-rd-face CXX)
+project(nc-vision CXX)
 
 message( STATUS "Build type: ${CMAKE_BUILD_TYPE}" )
 message( STATUS "Configuration types: ${CMAKE_CONFIGURATION_TYPES}" )
@@ -33,7 +33,7 @@ if(WIN32)
     set(dlib_DIR "D:/_Program Files/dlib/lib/cmake/dlib")
 endif()
 if(APPLE)
-    set(OpenCV_DIR "/usr/local/Cellar/opencv/4.0.1/lib/cmake/opencv4")
+    set(OpenCV_DIR "/usr/local/Cellar/opencv/4.1.0_2/lib/cmake/opencv4")
     set(dlib_DIR "/usr/local/Cellar/dlib/19.17/lib/cmake/dlib")
 endif()
 
