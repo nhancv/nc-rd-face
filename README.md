@@ -1,5 +1,5 @@
-# nc-rd-facemask
-Facemask C++
+# nc-vision
+Vision lib with opencv
 
 ## Install OpenCV
 
