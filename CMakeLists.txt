@@ -33,7 +33,7 @@ if(WIN32)
     set(dlib_DIR "D:/_Program Files/dlib/lib/cmake/dlib")
 endif()
 if(APPLE)
-    set(OpenCV_DIR "/usr/local/Cellar/opencv/4.1.0_2/lib/cmake/opencv4")
+    set(OpenCV_DIR "/usr/local/Cellar/opencv/4.0.1/lib/cmake/opencv4")
     set(dlib_DIR "/usr/local/Cellar/dlib/19.17/lib/cmake/dlib")
 endif()
 
@@ -51,9 +51,9 @@ file(GLOB hdrs *.hpp *.h)
 
 include_directories("${CMAKE_CURRENT_LIST_DIR}")
 
-macro(add_target name)
+macro(add_example name)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} ${OpenCV_LIBS} dlib::dlib)
 endmacro()
 
-add_target(face_detect)
+add_example(vision)

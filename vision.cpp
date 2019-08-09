@@ -32,7 +32,6 @@ void detectFaceDlibHog(frontal_face_detector hogFaceDetector, Mat &frameDlibHog,
 
     Mat frameDlibHogSmall;
     resize(frameDlibHog, frameDlibHogSmall, Size(inWidth, inHeight));
-
     // Convert OpenCV image format to Dlib's image format
     cv_image<bgr_pixel> dlibIm(frameDlibHogSmall);
 
@@ -46,14 +45,6 @@ void detectFaceDlibHog(frontal_face_detector hogFaceDetector, Mat &frameDlibHog,
         int y2 = (int) (faceRects[i].bottom() * scaleHeight);
         cv::rectangle(frameDlibHog, Point(x1, y1), Point(x2, y2), Scalar(0, 255, 0), (int) (frameHeight / 150.0), 4);
     }
-}
-
-void imageSource(const frontal_face_detector& hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
-    namedWindow("imageSource");
-
-    Mat img = imread("samples/samsam.jpg");
-    (*detectFaceCb)(hogFaceDetector, img, 200, 0);
-    imshow("imageSource", img);
 }
 
 void videoSource(const frontal_face_detector& hogFaceDetector, void (*detectFaceCb)(frontal_face_detector, Mat &, int, int)) {
@@ -97,9 +88,6 @@ int main(int argc, char **argv) {
 
     frontal_face_detector hogFaceDetector = get_frontal_face_detector();
     void (*detectFaceCb)(frontal_face_detector, Mat &, int, int) = &detectFaceDlibHog;
-
-    imageSource(hogFaceDetector, detectFaceCb);
-//    waitKey(0);
 
     videoSource(hogFaceDetector, detectFaceCb);
 
