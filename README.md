@@ -32,3 +32,6 @@ cmake --build . --config Release
 - Note for windows64:
 Remember setting arch support is amd64 (File -> Settings -> Build, Execution, Deployment -> Toolchains -> Visual Studio, Architecture: amd64)
 - Create new Release profile (CLion -> Preferences... -> Build, Execution, Deployment -> CMake, Click + -> New Release profile, move to on top as default)
+
+## Dataset 
+- Business cards: https://exhibits.stanford.edu/data/catalog/rb470rw0983

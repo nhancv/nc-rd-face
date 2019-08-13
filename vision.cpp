@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -20,49 +22,163 @@
 using namespace std;
 //using namespace dlib;
 using namespace cv;
-int thresh = 100;
-int max_thresh = 255;
-RNG rng(12345);
+
+bool compareContourAreas(const std::vector<cv::Point>& contour1, const std::vector<cv::Point>& contour2) {
+    double i = fabs(contourArea(cv::Mat(contour1)));
+    double j = fabs(contourArea(cv::Mat(contour2)));
+    return (i > j);
+}
+
+bool compareXCords(const Point &p1, const Point &p2) {
+    return (p1.x < p2.x);
+}
+
+bool compareYCords(const Point &p1, const Point &p2) {
+    return (p1.y < p2.y);
+}
+
+bool compareDistance(const pair<Point, Point> &p1, const pair<Point, Point> &p2) {
+    return (norm(p1.first - p1.second) < norm(p2.first - p2.second));
+}
+
+double _distance(const Point &p1, const Point &p2) {
+    return sqrt(((p1.x - p2.x) * (p1.x - p2.x)) +
+                ((p1.y - p2.y) * (p1.y - p2.y)));
+}
+
+void resizeToHeight(const Mat &src, Mat &dst, int height) {
+    Size s = Size((int) (src.cols * (height / double(src.rows))), height);
+    resize(src, dst, s, CV_INTER_AREA);
+}
+
+void orderPoints(vector<Point> inpts, vector<Point> &ordered) {
+    sort(inpts.begin(), inpts.end(), compareXCords);
+    vector<Point> lm(inpts.begin(), inpts.begin() + 2);
+    vector<Point> rm(inpts.end() - 2, inpts.end());
+
+    sort(lm.begin(), lm.end(), compareYCords);
+    Point tl(lm[0]);
+    Point bl(lm[1]);
+    vector<pair<Point, Point> > tmp;
+    for (size_t i = 0; i < rm.size(); i++) {
+        tmp.emplace_back(make_pair(tl, rm[i]));
+    }
+
+    sort(tmp.begin(), tmp.end(), compareDistance);
+    Point tr(tmp[0].second);
+    Point br(tmp[1].second);
+
+    ordered.push_back(tl);
+    ordered.push_back(tr);
+    ordered.push_back(br);
+    ordered.push_back(bl);
+}
+
+void fourPointTransform(const Mat &src, Mat &dst, vector<Point> pts) {
+    vector<Point> ordered_pts;
+    orderPoints(std::move(pts), ordered_pts);
+
+    double wa = _distance(ordered_pts[2], ordered_pts[3]);
+    double wb = _distance(ordered_pts[1], ordered_pts[0]);
+    double mw = max(wa, wb);
+
+    double ha = _distance(ordered_pts[1], ordered_pts[2]);
+    double hb = _distance(ordered_pts[0], ordered_pts[3]);
+    double mh = max(ha, hb);
+
+    Point2f src_[] =
+            {
+                    Point2f(ordered_pts[0].x, ordered_pts[0].y),
+                    Point2f(ordered_pts[1].x, ordered_pts[1].y),
+                    Point2f(ordered_pts[2].x, ordered_pts[2].y),
+                    Point2f(ordered_pts[3].x, ordered_pts[3].y),
+            };
+    Point2f dst_[] =
+            {
+                    Point2f(0, 0),
+                    Point2f(mw - 1, 0),
+                    Point2f(mw - 1, mh - 1),
+                    Point2f(0, mh - 1)
+            };
+    Mat m = getPerspectiveTransform(src_, dst_);
+    warpPerspective(src, dst, m, Size((int) mw, (int) mh));
+}
+
+void preProcess(const Mat &src, Mat &dst) {
+    cv::Mat imageGrayed;
+    cv::Mat imageOpen, imageClosed, imageBlurred;
+
+    cvtColor(src, imageGrayed, CV_BGR2GRAY);
+    imshow("Image grayed", imageGrayed);
+
+    cv::Mat structuringElmt = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
+    morphologyEx(imageGrayed, imageOpen, cv::MORPH_OPEN, structuringElmt);
+    morphologyEx(imageOpen, imageClosed, cv::MORPH_CLOSE, structuringElmt);
+    imshow("Image imageOpen", imageOpen);
+    imshow("Image imageClosed", imageClosed);
+
+    GaussianBlur(imageClosed, imageBlurred, Size(1, 1), 0);
+    imshow("Image imageBlurred", imageBlurred);
+    Canny(imageBlurred, dst, 75, 200);
+    imshow("Image dst", dst);
+
+
+}
 
 void imageSource() {
-//    namedWindow("ImageSource");
+    Mat image = imread("samples/business_cards/002.jpg");
+    if (image.empty()) {
+        printf("Cannot read image file");
+        return;
+    }
 
-    Mat img = imread("samples/card4.jpg");
-    cv::resize(img, img, cv::Size((int) (img.cols * 0.75), (int) (img.rows * 0.75)), 0, 0, CV_INTER_LINEAR);
-//    imshow("imageSource", img);
+    double ratio = image.rows / 500.0;
+    Mat orig = image.clone();
+    resizeToHeight(image, image, 500);
+//imshow("Image 1", image);
 
-    // PROCESSING
+    Mat gray, edged, warped;
+    preProcess(image, edged);
 
-    // STEP 1:
-    // Greyscale
-    cv::Mat greyMat;
-    cv::cvtColor(img, greyMat, cv::COLOR_BGR2GRAY);
-//    imshow("Gray Image", greyMat);
-    // GaussianBlur
-    cv::Mat gaussianBlurMat;
-    cv::GaussianBlur(greyMat, gaussianBlurMat, Size(5, 5), 0);
-//    imshow("GaussianBlur Image", gaussianBlurMat);
-    // Canny
-    cv::Mat cannyMat;
-    cv::Canny(gaussianBlurMat, cannyMat, 75, 200);
-//    imshow("Canny Image", cannyMat);
+//    imshow("Image PreProcess", edged);
 
-    // STEP 2:
-    // Finding Contours
-    // Find the contours in the edged image, keeping only the
+    // find the contours in the edged image, keeping only the
     // largest ones, and initialize the screen contour
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
-    findContours(cannyMat, contours, hierarchy,
-                 CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
-    // iterate through all the top-level contours,
-    // draw each connected component with its own random color
-    Mat drawing = Mat::zeros(cannyMat.size(), CV_8UC3);
-    for (int i = 0; i < contours.size(); i++) {
-        Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-        drawContours(drawing, contours, i, color, 2, 8, hierarchy, 0, Point());
+    vector<vector<Point> > approx;
+    findContours(edged, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+    approx.resize(contours.size());
+    // loop over the contours
+    int i;
+    for (i = 0; i < contours.size(); i++) {
+        // approximate the contour
+        double peri = arcLength(contours[i], true);
+        // if our approximated contour has four points, then we
+        //  can assume that we have found our screen
+        approxPolyDP(contours[i], approx[i], 0.02 * peri, true);
     }
-    imshow("Components", drawing);
+    sort(approx.begin(), approx.end(), compareContourAreas);
+
+    for (i = 0; i < approx.size(); i++) {
+        drawContours(image, approx, i, Scalar(255, 255, 0), 2);
+        if (approx[i].size() == 4) {
+            break;
+        }
+    }
+    imshow("drawContours", image);
+//    if (i < approx.size()) {
+//        drawContours(image, approx, i, Scalar(0, 255, 0), 2);
+//        for (j = 0; j < approx[i].size(); j++) {
+//            approx[i][j] *= ratio;
+//        }
+//
+//        fourPointTransform(orig, warped, approx[i]);
+//        cvtColor(warped, warped, CV_BGR2GRAY, 1);
+//        adaptiveThreshold(warped, warped, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 9, 15);
+//        GaussianBlur(warped, warped, Size(3, 3), 0);
+//        imshow("imageSource", warped);
+//    }
 
 
 }

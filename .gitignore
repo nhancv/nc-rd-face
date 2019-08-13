@@ -1,3 +1,7 @@
 *.idea
 cmake-build-*
 build
+samples/business_cards
+!samples/business_cards/001.jpg
+!samples/business_cards/002.jpg
+!samples/business_cards/003.jpg
