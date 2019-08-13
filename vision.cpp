@@ -120,8 +120,8 @@ void preProcess(const Mat &src, Mat &dst) {
 
 }
 
-void imageSource() {
-    Mat image = imread("samples/business_cards/002.jpg");
+void imageSource(const string& path) {
+    Mat image = imread(path);
     if (image.empty()) {
         printf("Cannot read image file");
         return;
@@ -159,7 +159,7 @@ void imageSource() {
             break;
         }
     }
-    imshow("drawContours", image);
+    imshow(path + "_contours", image);
     int j;
     if (i < approx.size()) {
         drawContours(image, approx, i, Scalar(0, 255, 0), 2);
@@ -169,7 +169,6 @@ void imageSource() {
 
         // apply the four point transform to obtain a top-down
         // view of the original image
-
         fourPointTransform(orig, warped, approx[i]);
         // convert the warped image to grayscale, then threshold it
         // to give it that 'black and white' paper effect
@@ -178,16 +177,19 @@ void imageSource() {
         GaussianBlur(warped, warped, Size(3, 3), 0);
 
         resizeToHeight(warped, warped, 500);
-        imshow("imageSource", warped);
+        imshow(path +  "_res", warped);
     }
-
 
 }
 
 int main(int argc, char **argv) {
 
-    imageSource();
-
+    char buffer[32];
+    for (int i = 1; i <= 3; i++) {
+        sprintf_s(buffer, "samples/business_cards/%03d.jpg", i);
+        cout << &"Process "[i];
+        imageSource(buffer);
+    }
     waitKey(0);
     return 0;
 }
