@@ -14,18 +14,12 @@
 #include <opencv2/tracking/tracker.hpp>
 #include <opencv2/core/ocl.hpp>
 
-//#include <dlib/opencv.h>
-//#include <dlib/image_io.h>
-//#include <dlib/image_processing.h>
-//#include <dlib/image_processing/frontal_face_detector.h>
-
 using namespace std;
-//using namespace dlib;
 using namespace cv;
 
-bool compareContourAreas(const std::vector<cv::Point> &contour1, const std::vector<cv::Point> &contour2) {
-    double i = fabs(contourArea(cv::Mat(contour1)));
-    double j = fabs(contourArea(cv::Mat(contour2)));
+bool compareContourAreas(const vector<Point> &contour1, const vector<Point> &contour2) {
+    double i = fabs(contourArea(Mat(contour1)));
+    double j = fabs(contourArea(Mat(contour2)));
     return (i > j);
 }
 
@@ -77,7 +71,7 @@ void orderPoints(vector<Point> inpts, vector<Point> &ordered) {
 
 void fourPointTransform(const Mat &src, Mat &dst, vector<Point> pts) {
     vector<Point> ordered_pts;
-    orderPoints(std::move(pts), ordered_pts);
+    orderPoints(move(pts), ordered_pts);
 
     float wa = _distance(ordered_pts[2], ordered_pts[3]);
     float wb = _distance(ordered_pts[1], ordered_pts[0]);
@@ -106,22 +100,22 @@ void fourPointTransform(const Mat &src, Mat &dst, vector<Point> pts) {
 }
 
 void preProcess(const Mat &src, Mat &dst) {
-    cv::Mat imageGrayed;
-    cv::Mat imageOpen, imageClosed, imageBlurred;
+    Mat imageGrayed;
+    Mat imageOpen, imageClosed, imageBlurred;
 
     cvtColor(src, imageGrayed, CV_BGR2GRAY);
-    imshow("Image grayed", imageGrayed);
+//    imshow("Image grayed", imageGrayed);
 
-    cv::Mat structuringElmt = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
-    morphologyEx(imageGrayed, imageOpen, cv::MORPH_OPEN, structuringElmt);
-    morphologyEx(imageOpen, imageClosed, cv::MORPH_CLOSE, structuringElmt);
-    imshow("Image imageOpen", imageOpen);
-    imshow("Image imageClosed", imageClosed);
+    Mat structuringElmt = getStructuringElement(MORPH_ELLIPSE, Size(4, 4));
+    morphologyEx(imageGrayed, imageOpen, MORPH_OPEN, structuringElmt);
+    morphologyEx(imageOpen, imageClosed, MORPH_CLOSE, structuringElmt);
+//    imshow("Image imageOpen", imageOpen);
+//    imshow("Image imageClosed", imageClosed);
 
     GaussianBlur(imageClosed, imageBlurred, Size(1, 1), 0);
-    imshow("Image imageBlurred", imageBlurred);
     Canny(imageBlurred, dst, 75, 200);
-    imshow("Image dst", dst);
+//    imshow("Image imageBlurred", imageBlurred);
+//    imshow("Image dst", dst);
 
 
 }
