@@ -120,7 +120,7 @@ void preProcess(const Mat &src, Mat &dst) {
 
 }
 
-void imageSource(const string& path) {
+void imageSource(const string &path) {
     Mat image = imread(path);
     if (image.empty()) {
         printf("Cannot read image file");
@@ -173,11 +173,12 @@ void imageSource(const string& path) {
         // convert the warped image to grayscale, then threshold it
         // to give it that 'black and white' paper effect
         cvtColor(warped, warped, CV_BGR2GRAY, 1);
+        threshold(warped, warped, 127, 255, CV_THRESH_BINARY);
         adaptiveThreshold(warped, warped, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 9, 15);
         GaussianBlur(warped, warped, Size(3, 3), 0);
 
         resizeToHeight(warped, warped, 500);
-        imshow(path +  "_res", warped);
+        imshow(path + "_res", warped);
     }
 
 }
