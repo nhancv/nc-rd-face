@@ -23,7 +23,7 @@ using namespace std;
 //using namespace dlib;
 using namespace cv;
 
-bool compareContourAreas(const std::vector<cv::Point>& contour1, const std::vector<cv::Point>& contour2) {
+bool compareContourAreas(const std::vector<cv::Point> &contour1, const std::vector<cv::Point> &contour2) {
     double i = fabs(contourArea(cv::Mat(contour1)));
     double j = fabs(contourArea(cv::Mat(contour2)));
     return (i > j);
@@ -41,13 +41,13 @@ bool compareDistance(const pair<Point, Point> &p1, const pair<Point, Point> &p2)
     return (norm(p1.first - p1.second) < norm(p2.first - p2.second));
 }
 
-double _distance(const Point &p1, const Point &p2) {
-    return sqrt(((p1.x - p2.x) * (p1.x - p2.x)) +
-                ((p1.y - p2.y) * (p1.y - p2.y)));
+float _distance(const Point &p1, const Point &p2) {
+    return (float) sqrt(((p1.x - p2.x) * (p1.x - p2.x)) +
+                        ((p1.y - p2.y) * (p1.y - p2.y)));
 }
 
 void resizeToHeight(const Mat &src, Mat &dst, int height) {
-    Size s = Size((int) (src.cols * (height / double(src.rows))), height);
+    Size s = Size((int) (src.cols * (height / float(src.rows))), height);
     resize(src, dst, s, CV_INTER_AREA);
 }
 
@@ -60,8 +60,9 @@ void orderPoints(vector<Point> inpts, vector<Point> &ordered) {
     Point tl(lm[0]);
     Point bl(lm[1]);
     vector<pair<Point, Point> > tmp;
-    for (size_t i = 0; i < rm.size(); i++) {
-        tmp.emplace_back(make_pair(tl, rm[i]));
+    tmp.reserve(rm.size());
+    for (auto &i : rm) {
+        tmp.emplace_back(make_pair(tl, i));
     }
 
     sort(tmp.begin(), tmp.end(), compareDistance);
@@ -78,20 +79,20 @@ void fourPointTransform(const Mat &src, Mat &dst, vector<Point> pts) {
     vector<Point> ordered_pts;
     orderPoints(std::move(pts), ordered_pts);
 
-    double wa = _distance(ordered_pts[2], ordered_pts[3]);
-    double wb = _distance(ordered_pts[1], ordered_pts[0]);
-    double mw = max(wa, wb);
+    float wa = _distance(ordered_pts[2], ordered_pts[3]);
+    float wb = _distance(ordered_pts[1], ordered_pts[0]);
+    float mw = max(wa, wb);
 
-    double ha = _distance(ordered_pts[1], ordered_pts[2]);
-    double hb = _distance(ordered_pts[0], ordered_pts[3]);
-    double mh = max(ha, hb);
+    float ha = _distance(ordered_pts[1], ordered_pts[2]);
+    float hb = _distance(ordered_pts[0], ordered_pts[3]);
+    float mh = max(ha, hb);
 
     Point2f src_[] =
             {
-                    Point2f(ordered_pts[0].x, ordered_pts[0].y),
-                    Point2f(ordered_pts[1].x, ordered_pts[1].y),
-                    Point2f(ordered_pts[2].x, ordered_pts[2].y),
-                    Point2f(ordered_pts[3].x, ordered_pts[3].y),
+                    Point2f((float) ordered_pts[0].x, (float) ordered_pts[0].y),
+                    Point2f((float) ordered_pts[1].x, (float) ordered_pts[1].y),
+                    Point2f((float) ordered_pts[2].x, (float) ordered_pts[2].y),
+                    Point2f((float) ordered_pts[3].x, (float) ordered_pts[3].y),
             };
     Point2f dst_[] =
             {
@@ -135,12 +136,9 @@ void imageSource() {
     double ratio = image.rows / 500.0;
     Mat orig = image.clone();
     resizeToHeight(image, image, 500);
-//imshow("Image 1", image);
 
     Mat gray, edged, warped;
     preProcess(image, edged);
-
-//    imshow("Image PreProcess", edged);
 
     // find the contours in the edged image, keeping only the
     // largest ones, and initialize the screen contour
@@ -160,6 +158,7 @@ void imageSource() {
     }
     sort(approx.begin(), approx.end(), compareContourAreas);
 
+    // show the contour (outline) of the piece of paper
     for (i = 0; i < approx.size(); i++) {
         drawContours(image, approx, i, Scalar(255, 255, 0), 2);
         if (approx[i].size() == 4) {
@@ -167,18 +166,26 @@ void imageSource() {
         }
     }
     imshow("drawContours", image);
-//    if (i < approx.size()) {
-//        drawContours(image, approx, i, Scalar(0, 255, 0), 2);
-//        for (j = 0; j < approx[i].size(); j++) {
-//            approx[i][j] *= ratio;
-//        }
-//
-//        fourPointTransform(orig, warped, approx[i]);
-//        cvtColor(warped, warped, CV_BGR2GRAY, 1);
-//        adaptiveThreshold(warped, warped, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 9, 15);
-//        GaussianBlur(warped, warped, Size(3, 3), 0);
-//        imshow("imageSource", warped);
-//    }
+    int j;
+    if (i < approx.size()) {
+        drawContours(image, approx, i, Scalar(0, 255, 0), 2);
+        for (j = 0; j < approx[i].size(); j++) {
+            approx[i][j] *= ratio;
+        }
+
+        // apply the four point transform to obtain a top-down
+        // view of the original image
+
+        fourPointTransform(orig, warped, approx[i]);
+        // convert the warped image to grayscale, then threshold it
+        // to give it that 'black and white' paper effect
+        cvtColor(warped, warped, CV_BGR2GRAY, 1);
+        adaptiveThreshold(warped, warped, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 9, 15);
+        GaussianBlur(warped, warped, Size(3, 3), 0);
+
+        resizeToHeight(warped, warped, 500);
+        imshow("imageSource", warped);
+    }
 
 
 }
