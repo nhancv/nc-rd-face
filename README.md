@@ -35,3 +35,5 @@ Remember setting arch support is amd64 (File -> Settings -> Build, Execution, De
 
 ## Dataset 
 - Business cards: https://exhibits.stanford.edu/data/catalog/rb470rw0983
+- Scan and drop
+![Preview](screenshot/scan_drop_demo.PNG)

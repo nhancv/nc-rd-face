@@ -229,86 +229,158 @@ Mat linesDetection(const Mat &src) {
     int yMin = mask.rows;
     int xMax = 0;
     int yMax = 0;
+    vector<Vec4i> validLines;
     for (size_t i = 0; i < lines.size(); i++) {
         Vec4i l = lines[i];
         Point a(l[0], l[1]);
         Point b(l[2], l[3]);
         double res = cv::norm(a - b);
-        if (res > mask.cols / 2.0) {
-            xMin = cv::min(xMin, a.x);
-            xMax = cv::max(xMax, b.x);
-
-            line(color, a, b, Scalar(255));
-            circle(color, a, 5, Scalar(0, 0, 255) /*Red*/, 2);
-            circle(color, b, 5, Scalar(0, 255, 255) /*Yellow*/, 2);
-        }
 
         if (res > mask.rows / 2.0) {
+            xMin = cv::min(xMin, a.x);
+            xMin = cv::min(xMin, b.x);
+            xMax = cv::max(xMax, a.x);
+            xMax = cv::max(xMax, b.x);
             yMin = cv::min(yMin, a.y);
+            yMin = cv::min(yMin, b.y);
+            yMax = cv::max(yMax, a.y);
             yMax = cv::max(yMax, b.y);
 
             line(color, a, b, Scalar(255));
             circle(color, a, 5, Scalar(0, 0, 255) /*Red*/, 2);
             circle(color, b, 5, Scalar(0, 255, 255) /*Yellow*/, 2);
+            validLines.push_back(l);
         }
     }
+    // Constraint corner
+    if (cv::abs(xMin - xMax) < src.cols / 3) {
+        xMin = 0;
+        xMax = src.cols - 1;
+    }
+    if (cv::abs(yMin - yMax) < src.rows / 3) {
+        yMin = 0;
+        yMax = src.rows - 1;
+    }
+
+    circle(color, Point(xMin, yMin), 10, Scalar(255, 255, 0) /*Blue*/, 2);
+    circle(color, Point((xMin + xMax) / 2, yMin), 10, Scalar(255, 255, 0) /*Blue*/, 2);
+    circle(color, Point(xMax, yMax), 10, Scalar(255, 255, 0) /*Blue*/, 2);
+    circle(color, Point(xMax, (yMin + yMax) / 2), 10, Scalar(255, 255, 0) /*Blue*/, 2);
+
+//    imshow("color", color);
 
     int middleX = (xMax + xMin) / 2;
     int middleY = (yMax + yMin) / 2;
+    int offsetX = (xMax - xMin) / 4;
+    int offsetY = (yMax - yMin) / 4;
     Point leftTop(middleX, middleY);
     Point topRight(middleX, middleY);
     Point rightBottom(middleX, middleY);
     Point bottomLeft(middleX, middleY);
-    for (size_t i = 0; i < lines.size(); i++) {
-        Vec4i l = lines[i];
+    bool lt = false, tr = false, rb = false, bl = false;
+    for (size_t i = 0; i < validLines.size(); i++) {
+        Vec4i l = validLines[i];
         Point a(l[0], l[1]);
         Point b(l[2], l[3]);
         // Find left, top
-        if (a.x < middleX && a.y < middleY) {
+        if (a.x < middleX - offsetX && a.y < middleY - offsetY) {
             leftTop.x = cv::min(a.x, leftTop.x);
             leftTop.y = cv::min(a.y, leftTop.y);
+            lt = true;
         }
-        if (b.x < middleX && b.y < middleY) {
+        if (b.x < middleX - offsetX && b.y < middleY - offsetY) {
             leftTop.x = cv::min(b.x, leftTop.x);
             leftTop.y = cv::min(b.y, leftTop.y);
+            lt = true;
         }
         // Find top, right
-        if (a.x > middleX && a.y < middleY) {
+        if (a.x > middleX + offsetX && a.y < middleY - offsetY) {
             topRight.x = cv::max(a.x, topRight.x);
             topRight.y = cv::min(a.y, topRight.y);
+            tr = true;
         }
-        if (b.x > middleX && b.y < middleY) {
+        if (b.x > middleX + offsetX && b.y < middleY - offsetY) {
             topRight.x = cv::max(b.x, topRight.x);
             topRight.y = cv::min(b.y, topRight.y);
+            tr = true;
         }
         // Find right, bottom
-        if (a.x > middleX && a.y > middleY) {
+        if (a.x > middleX + offsetX && a.y > middleY + offsetY) {
             rightBottom.x = cv::max(a.x, rightBottom.x);
             rightBottom.y = cv::max(a.y, rightBottom.y);
+            rb = true;
         }
-        if (b.x > middleX && b.y > middleY) {
+        if (b.x > middleX + offsetX && b.y > middleY + offsetY) {
             rightBottom.x = cv::max(b.x, rightBottom.x);
             rightBottom.y = cv::max(b.y, rightBottom.y);
+            rb = true;
         }
         // Find bottom, left
-        if (a.x < middleX && a.y > middleY) {
+        if (a.x < middleX - offsetX && a.y > middleY + offsetY) {
             bottomLeft.x = cv::min(a.x, bottomLeft.x);
             bottomLeft.y = cv::max(a.y, bottomLeft.y);
+            bl = true;
         }
-        if (b.x < middleX && b.y > middleY) {
+        if (b.x < middleX - offsetX && b.y > middleY + offsetY) {
             bottomLeft.x = cv::min(b.x, bottomLeft.x);
             bottomLeft.y = cv::max(b.y, bottomLeft.y);
+            bl = true;
         }
     }
-//    imshow("color", color);
+    // Verify corner point
+    int thresholdDis = 50;
+    if (!lt) {
+        leftTop.x = xMin;
+        leftTop.y = yMin;
+    }
+    if (cv::abs(leftTop.x - xMin) > thresholdDis) {
+        leftTop.x = xMin;
+    }
+    if (cv::abs(leftTop.y - yMin) > thresholdDis) {
+        leftTop.y = yMin;
+    }
+    if (!tr) {
+        topRight.x = xMax;
+        topRight.y = yMin;
+    }
+    if (cv::abs(topRight.x - xMax) > thresholdDis) {
+        topRight.x = xMax;
+    }
+    if (cv::abs(topRight.y - yMin) > thresholdDis) {
+        topRight.y = yMin;
+    }
+    if (!rb) {
+        rightBottom.x = xMax;
+        rightBottom.y = yMax;
+    }
+    if (cv::abs(rightBottom.x - xMax) > thresholdDis) {
+        rightBottom.x = xMax;
+    }
+    if (cv::abs(rightBottom.y - yMax) > thresholdDis) {
+        rightBottom.y = yMax;
+    }
+    if (!bl) {
+        bottomLeft.x = xMin;
+        bottomLeft.y = yMax;
+    }
+    if (cv::abs(bottomLeft.x - xMin) > thresholdDis) {
+        bottomLeft.x = xMin;
+    }
+    if (cv::abs(bottomLeft.y - yMax) > thresholdDis) {
+        bottomLeft.y = yMax;
+    }
 
     line(out, leftTop, topRight, Scalar(255), 3, 8);
-    line(out, topRight, Point(xMax, yMax), Scalar(255), 3, 8);
-    line(out, Point(xMax, yMax), Point(xMin, yMax), Scalar(255), 3, 8);
-    line(out, Point(xMin, yMax), leftTop, Scalar(255), 3, 8);
+    line(out, topRight, rightBottom, Scalar(255), 3, 8);
+    line(out, rightBottom, bottomLeft, Scalar(255), 3, 8);
+    line(out, bottomLeft, leftTop, Scalar(255), 3, 8);
+
+    // TODO: need constraint rotate corner: depend on corner point => make sure all corner similar same and not
+    // except threshold
+    // ...
+
 
 //    imshow("HoughLinesP", out);
-
     return out;
 }
 
@@ -343,7 +415,7 @@ void imageSource(const string &path) {
         double peri = arcLength(contours[i], true);
         // if our approximated contour has four points, then we
         //  can assume that we have found our screen
-        approxPolyDP(contours[i], approx[i], 0.02 * peri, true);
+        approxPolyDP(contours[i], approx[i], 0.01 * peri, true);
     }
     sort(approx.begin(), approx.end(), compareContourAreas);
 
@@ -375,8 +447,8 @@ void imageSource(const string &path) {
 //        adaptiveThreshold(warped, warped, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 9, 15);
 //        GaussianBlur(warped, warped, Size(3, 3), 0);
 
-        resizeToHeight(warped, warped, 500);
-//        imshow(path + "_res", warped);
+        resizeToHeight(warped, warped, 400);
+        imshow(path + "_res", warped);
     }
 
 }
@@ -387,10 +459,13 @@ int main(int argc, char **argv) {
     int i = 1;
     do {
         sprintf_s(buffer, "samples/business_cards/%03d.jpg", i);
-        cout << i << " ";
+        int64 t0 = cv::getTickCount();
         imageSource(buffer);
+        int64 t1 = cv::getTickCount();
+        double secs = (t1 - t0) / cv::getTickFrequency();
+        cout << i << " - time: " << secs << endl;
         i++;
-    } while (i <= 10);
+    } while (i <= 3);
     waitKey(0);
     return 0;
 }
